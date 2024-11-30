@@ -1,37 +1,124 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html>
 <head>
-  <title>반 배정 룰렛</title>
+  <meta charset="UTF-8">
+  <title>학급 배정 업로드 및 다운로드</title>
   <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+  <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <style>
+    body {
+      background-color: #f8f9fa;
+      font-family: 'Arial', sans-serif;
+    }
+
+    .form-container {
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 30px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-header {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .spinner-border {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+
+    .submit-btn {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #downloadLink {
+      display: none;
+    }
+  </style>
 </head>
 <body>
-<div class="container mt-5">
-  <h2>Assign Class Form</h2>
-  <form th:action="@{/api/v1/assignments/upload}" method="post" enctype="multipart/form-data">
-    <!-- Multipart File Input -->
-    <div class="mb-3">
-      <label for="file" class="form-label">Upload File</label>
-      <input type="file" class="form-control" id="file" name="file" required>
-    </div>
+<div class="container">
+  <div class="form-container">
+    <h2 class="form-header text-primary">학급 배정 룰렛</h2>
+    <form id="uploadForm">
+      <!-- 파일 업로드 -->
+      <div class="mb-3">
+        <label for="file" class="form-label">파일 업로드</label>
+        <input type="file" class="form-control" id="file" name="file" required>
+        <div class="form-text">유효한 CSV 또는 Excel 파일을 업로드하세요.</div>
+      </div>
 
-    <!-- Humanities Count Input -->
-    <div class="mb-3">
-      <label for="humanitiesCount" class="form-label">Humanities Count</label>
-      <input type="number" class="form-control" id="humanitiesCount" name="humanitiesCount" min="0"
-             required>
-    </div>
+      <!-- 인문학 배정 인원 입력 -->
+      <div class="mb-3">
+        <label for="humanitiesCount" class="form-label">인문학 학급 수</label>
+        <input type="number" class="form-control" id="humanitiesCount" name="humanitiesCount"
+               min="0" placeholder="인문학 학급 수를 입력하세요." required>
+      </div>
 
-    <!-- Natural Count Input -->
-    <div class="mb-3">
-      <label for="naturalCount" class="form-label">Natural Count</label>
-      <input type="number" class="form-control" id="naturalCount" name="naturalCount" min="0"
-             required>
-    </div>
+      <!-- 자연과학 배정 인원 입력 -->
+      <div class="mb-3">
+        <label for="naturalCount" class="form-label">자연과학 학급 수</label>
+        <input type="number" class="form-control" id="naturalCount" name="naturalCount" min="0"
+               placeholder="자연과학 학급 수를 입력하세요." required>
+      </div>
 
-    <!-- Submit Button -->
-    <button type="submit" class="btn btn-primary">Submit</button>
-  </form>
+      <!-- 제출 버튼 및 스피너 -->
+      <div class="submit-btn">
+        <button type="submit" class="btn btn-primary btn-lg w-100">
+          <span id="spinner" class="spinner-border spinner-border-sm me-2 d-none" role="status"
+                aria-hidden="true"></span>
+          제출
+        </button>
+      </div>
+    </form>
+
+    <!-- 다운로드 링크 -->
+    <div id="downloadSection" class="mt-3 text-center">
+      <a id="downloadLink" class="btn btn-success" href="#" download>처리된 파일 다운로드</a>
+    </div>
+  </div>
 </div>
+
+<script>
+  document.getElementById('uploadForm').addEventListener('submit', function (event) {
+    event.preventDefault(); // 기본 폼 제출 동작을 막음
+    const spinner = document.getElementById('spinner');
+    const downloadLink = document.getElementById('downloadLink');
+    const formData = new FormData(this);
+
+    spinner.classList.remove('d-none'); // 스피너 표시
+    downloadLink.style.display = 'none'; // 다운로드 링크 숨김
+
+    fetch('/api/v1/assignments/upload', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('네트워크 응답이 올바르지 않습니다.');
+      }
+      return response.blob();
+    })
+    .then(blob => {
+      spinner.classList.add('d-none'); // 스피너 숨기기
+      const url = window.URL.createObjectURL(blob);
+      downloadLink.href = url;
+      downloadLink.download = '학급_배정_룰렛.xlsx'; // 다운로드 파일 이름
+      downloadLink.style.display = 'block'; // 다운로드 링크 표시
+    })
+    .catch(error => {
+      spinner.classList.add('d-none'); // 스피너 숨기기
+      console.error('업로드 또는 다운로드 중 문제가 발생했습니다:', error);
+      alert('파일 처리 중 오류가 발생했습니다. 다시 시도하세요.');
+    });
+  });
+</script>
 </body>
 </html>

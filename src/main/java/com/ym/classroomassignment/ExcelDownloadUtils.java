@@ -1,5 +1,7 @@
 package com.ym.classroomassignment;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -23,8 +25,18 @@ public class ExcelDownloadUtils {
       Map<Integer, List<Student>> groupedByClass) {
     return outputStream -> {
       try (Workbook workbook = new XSSFWorkbook()) {
+        Map<Integer, List<Integer>> resultMap = new HashMap<>();
+
+        int resultMapIndex = 1;
+        for (Entry<Integer, List<Student>> ignored : groupedByClass.entrySet()) {
+          resultMap.put(resultMapIndex++, new ArrayList<>());
+        }
+
+        resultMapIndex = 1;
         // 각 반별로 시트 생성 및 데이터 추가
         for (Entry<Integer, List<Student>> entry : groupedByClass.entrySet()) {
+          List<Integer> results = resultMap.get(resultMapIndex);
+
           Integer classNumber = entry.getKey();
           List<Student> classStudents = entry.getValue();
 
@@ -42,6 +54,8 @@ public class ExcelDownloadUtils {
             Cell cell = headerRow.createCell(i);
             cell.setCellValue(headers[i]);
             cell.setCellStyle(headerStyle);
+
+            sheet.setColumnWidth(i, 9 * 256);
           }
 
           CellStyle defaultStyle = createCellStyle(workbook, IndexedColors.WHITE);
@@ -52,8 +66,27 @@ public class ExcelDownloadUtils {
 
           // 데이터 작성
           int rowIndex = 1;
+
+          int girlCount = 0;
+          int boyCount = 0;
+          int class1Count = 0;
+          int class2Count = 0;
+          int class3Count = 0;
+          int class4Count = 0;
+          int class5Count = 0;
+          int class6Count = 0;
+
           for (Student student : classStudents) {
             Row row = sheet.createRow(rowIndex++);
+
+            switch (student.classCount) {
+              case 1 -> class1Count++;
+              case 2 -> class2Count++;
+              case 3 -> class3Count++;
+              case 4 -> class4Count++;
+              case 5 -> class5Count++;
+              case 6 -> class6Count++;
+            }
 
             Cell cell1 = row.createCell(0);
             cell1.setCellValue(student.getId());
@@ -75,8 +108,10 @@ public class ExcelDownloadUtils {
             cell5.setCellValue(student.getGender());
             if ("남".equals(student.getGender())) {
               cell5.setCellStyle(blueGreyStyle);
+              boyCount++;
             } else {
               cell5.setCellStyle(pinkStyle);
+              girlCount++;
             }
 
             Cell cell6 = row.createCell(5);
@@ -176,9 +211,42 @@ public class ExcelDownloadUtils {
             cell20.setCellStyle(defaultStyle);
           }
 
-          // 열 크기 자동 조정
+          results.add(resultMapIndex);
+          results.add(girlCount);
+          results.add(boyCount);
+          results.add(class1Count);
+          results.add(class2Count);
+          results.add(class3Count);
+          results.add(class4Count);
+          results.add(class5Count);
+          results.add(class6Count);
+
+          resultMapIndex++;
+        }
+
+        // 시트 생성
+        Sheet sheet = workbook.createSheet("결과");
+        Row headerRow = sheet.createRow(0);
+        CellStyle headerStyle = createCellStyle(workbook, IndexedColors.YELLOW);
+        String[] headers = {"반", "여학생 수", "남학생 수", "1과목 선택 수", "2과목 선택 수", "3과목 선택 수", "4과목 선택 수",
+            "5과목 선택 수", "6과목 선택 수"};
+        for (int i = 0; i < headers.length; i++) {
+          Cell cell = headerRow.createCell(i);
+          cell.setCellValue(headers[i]);
+          cell.setCellStyle(headerStyle);
+
+          sheet.setColumnWidth(i, 9 * 256);
+        }
+
+        int rowIndex = 1;
+        CellStyle defaultStyle = createCellStyle(workbook, IndexedColors.WHITE);
+        for (Entry<Integer, List<Integer>> entry : resultMap.entrySet()) {
+          Row valueRow = sheet.createRow(rowIndex++);
+          List<Integer> results = entry.getValue();
           for (int i = 0; i < headers.length; i++) {
-            sheet.autoSizeColumn(i);
+            Cell cell = valueRow.createCell(i);
+            cell.setCellStyle(defaultStyle);
+            cell.setCellValue(results.get(i));
           }
         }
 
@@ -205,6 +273,17 @@ public class ExcelDownloadUtils {
     style.setFont(font);
 
     return style;
+  }
+
+  private static void createTwoCell(Sheet sheet, int rowIndex, CellStyle cellStyle, String value1,
+      int value2) {
+    Row girlRow = sheet.createRow(rowIndex);
+    Cell girlCell1 = girlRow.createCell(0);
+    girlCell1.setCellStyle(cellStyle);
+    girlCell1.setCellValue(value1);
+    Cell girlCell2 = girlRow.createCell(1);
+    girlCell2.setCellStyle(cellStyle);
+    girlCell2.setCellValue(value2);
   }
 
 }

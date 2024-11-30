@@ -3,6 +3,7 @@ package com.ym.classroomassignment;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,13 +38,13 @@ public class ClassAssignmentService {
     List<Student> humanities = students.stream().filter(Student::isHumanities).toList();
     List<Student> naturals = students.stream().filter(student -> !student.isHumanities()).toList();
 
-    // 3. 각 그룹의 반 나누기
-    Map<Integer, List<Student>> humanitiesAssignments = assignGroupBySubjects(humanities, 1,
+    // 2. 각각 그룹 배정
+    Map<Integer, List<Student>> humanitiesAssignments = assignGroupBalanced(humanities, 1,
         humanitiesCount);
-    Map<Integer, List<Student>> naturalAssignments = assignGroupBySubjects(naturals,
+    Map<Integer, List<Student>> naturalAssignments = assignGroupBalanced(naturals,
         humanitiesCount + 1, naturalCount);
 
-    // 4. 두 그룹 합치기
+    // 3. 두 그룹 합치기
     Map<Integer, List<Student>> allAssignments = new HashMap<>();
     allAssignments.putAll(humanitiesAssignments);
     allAssignments.putAll(naturalAssignments);
@@ -51,18 +52,41 @@ public class ClassAssignmentService {
     return allAssignments;
   }
 
-  private Map<Integer, List<Student>> assignGroupBySubjects(List<Student> group, int startClassId,
+  private Map<Integer, List<Student>> assignGroupBalanced(List<Student> group, int startClassId,
       int numClasses) {
+    // 초기화
     Map<Integer, List<Student>> classAssignments = new HashMap<>();
     for (int i = 0; i < numClasses; i++) {
       classAssignments.put(startClassId + i, new ArrayList<>());
     }
 
-    // 과목별 그룹화
+    // 1. 성별 그룹화
+    List<Student> females = new ArrayList<>(group.stream().filter(Student::isFemale).toList());
+    List<Student> males = new ArrayList<>(
+        group.stream().filter(student -> !student.isFemale()).toList());
+
+    // 2. 과목 선택 그룹화
+    Map<Integer, List<Student>> subjectGroups = groupBySubjects(group);
+
+    // 3. 학생 랜덤 섞기
+    Collections.shuffle(females);
+    Collections.shuffle(males);
+
+    // 4. 성별 균형 배정
+    assignStudentsByGender(classAssignments, females, startClassId, numClasses);
+    assignStudentsByGender(classAssignments, males, startClassId, numClasses);
+
+    // 5. 과목 선택 균형 배정
+    assignStudentsBySubjects(classAssignments, subjectGroups, startClassId, numClasses);
+
+    return classAssignments;
+  }
+
+  private Map<Integer, List<Student>> groupBySubjects(List<Student> group) {
     Map<Integer, List<Student>> subjectGroups = new HashMap<>();
-    for (int subjectIndex = 0; subjectIndex < 12; subjectIndex++) { // 과목1~12
-      int index = subjectIndex; // Lambda에서 사용하는 인덱스
-      List<Student> studentsInSubject = group.stream()
+    for (int subjectIndex = 0; subjectIndex < 12; subjectIndex++) {
+      int index = subjectIndex;
+      List<Student> studentsInSubject = new ArrayList<>(group.stream()
           .filter(student -> {
             if (index < 7) {
               return student.humanitiesSubjects.get(index) == 1;
@@ -70,19 +94,35 @@ public class ClassAssignmentService {
               return student.naturalSubjects.get(index - 7) == 1;
             }
           })
-          .toList();
+          .toList());
       subjectGroups.put(subjectIndex, studentsInSubject);
     }
+    return subjectGroups;
+  }
 
-    // 각 과목 그룹을 반에 순차적으로 배정
+  private void assignStudentsByGender(Map<Integer, List<Student>> classAssignments,
+      List<Student> students,
+      int startClassId, int numClasses) {
     int currentClass = startClassId;
+    for (Student student : students) {
+      classAssignments.get(currentClass).add(student);
+      currentClass++;
+      if (currentClass >= startClassId + numClasses) {
+        currentClass = startClassId;
+      }
+    }
+  }
+
+  private void assignStudentsBySubjects(Map<Integer, List<Student>> classAssignments,
+      Map<Integer, List<Student>> subjectGroups, int startClassId, int numClasses) {
+    int currentClass = startClassId;
+
     for (List<Student> subjectGroup : subjectGroups.values()) {
+      Collections.shuffle(subjectGroup); // 과목별 그룹을 랜덤하게 섞기
       for (Student student : subjectGroup) {
         // 중복 배정을 방지
         if (!isStudentAlreadyAssigned(classAssignments, student)) {
           classAssignments.get(currentClass).add(student);
-
-          // 다음 반으로 이동
           currentClass++;
           if (currentClass >= startClassId + numClasses) {
             currentClass = startClassId;
@@ -90,8 +130,6 @@ public class ClassAssignmentService {
         }
       }
     }
-
-    return classAssignments;
   }
 
   private boolean isStudentAlreadyAssigned(Map<Integer, List<Student>> classAssignments,

@@ -69,6 +69,10 @@ public class Student {
     return naturalSubjects.stream().mapToInt(Integer::intValue).sum();
   }
 
+  public boolean isFemale() {
+    return "여".equals(gender);
+  }
+
   @Override
   public String toString() {
     return id + " (" + grade + "-" + gender + "-" + classCount + ")";
