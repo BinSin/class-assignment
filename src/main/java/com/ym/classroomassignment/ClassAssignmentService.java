@@ -3,11 +3,9 @@ package com.ym.classroomassignment;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,78 +28,75 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public class ClassAssignmentService {
 
-  public Map<String, List<Student>> assignClass(MultipartFile file, int totalClassCount)
+  public Map<Integer, List<Student>> assignClasses(MultipartFile file, int humanitiesCount,
+      int naturalCount)
       throws IOException {
-    // 받은 엑셀 파일 컨버팅
-    List<Student> students = ExcelUtils.mapExcelToStudents(file);
+    List<Student> students = ExcelUploadUtils.mapExcelToStudents(file);
 
-    // 반 나누기 -> 인문계 / 자연계 나누기 (몇과목 선택자인지도 저장)
-    // 예체능은 선택 과목에 따라 인문계 자연계에 넣기
-    List<Student> humanitiesStudents = new ArrayList<>();
-    List<Student> naturalStudents = new ArrayList<>();
+    // 1. 인문계와 자연계 분리
+    List<Student> humanities = students.stream().filter(Student::isHumanities).toList();
+    List<Student> naturals = students.stream().filter(student -> !student.isHumanities()).toList();
 
-    for (Student student : students) {
-      if (student.isHumanities()) {
-        humanitiesStudents.add(student);
-      } else {
-        naturalStudents.add(student);
-      }
-    }
+    // 3. 각 그룹의 반 나누기
+    Map<Integer, List<Student>> humanitiesAssignments = assignGroupBySubjects(humanities, 1,
+        humanitiesCount);
+    Map<Integer, List<Student>> naturalAssignments = assignGroupBySubjects(naturals,
+        humanitiesCount + 1, naturalCount);
 
-    log.info("총 인문계: {}", humanitiesStudents.size());
-    log.info("총 자연계: {}", naturalStudents.size());
-    int totalStudents = humanitiesStudents.size() + naturalStudents.size();
+    // 4. 두 그룹 합치기
+    Map<Integer, List<Student>> allAssignments = new HashMap<>();
+    allAssignments.putAll(humanitiesAssignments);
+    allAssignments.putAll(naturalAssignments);
 
-    int humanitiesClassCount = (int) Math.round(
-        (double) totalClassCount * humanitiesStudents.size() / totalStudents);
-    int naturalClassCount = totalClassCount - humanitiesClassCount;
-
-    log.info("인문계 반: {}", humanitiesClassCount);
-    log.info("자연계 반: {}", naturalClassCount);
-
-    // 반 배정
-    Map<String, List<Student>> humanitiesClassAssignments = assignStudentsToClasses(
-        humanitiesStudents, humanitiesClassCount, "인문계");
-    Map<String, List<Student>> naturalClassAssignments = assignStudentsToClasses(naturalStudents,
-        naturalClassCount, "자연계");
-
-    Map<String, List<Student>> mergedMap = new HashMap<>(humanitiesClassAssignments);
-
-    naturalClassAssignments.forEach((key, value) ->
-        mergedMap.merge(key, value, (list1, list2) -> {
-          list1.addAll(list2);
-          return list1;
-        })
-    );
-
-    return mergedMap;
+    return allAssignments;
   }
 
-
-  private Map<String, List<Student>> assignStudentsToClasses(List<Student> students,
-      int totalClasses, String classify) {
-    // 반 별로 학생을 저장할 맵
-    Map<String, List<Student>> classAssignments = new HashMap<>();
-    for (int i = 1; i <= totalClasses; i++) {
-      classAssignments.put(classify + " " + i, new ArrayList<>());
+  private Map<Integer, List<Student>> assignGroupBySubjects(List<Student> group, int startClassId,
+      int numClasses) {
+    Map<Integer, List<Student>> classAssignments = new HashMap<>();
+    for (int i = 0; i < numClasses; i++) {
+      classAssignments.put(startClassId + i, new ArrayList<>());
     }
 
-    // 학생들을 grade, gender, classCount 기준으로 그룹화
-    Map<String, List<Student>> groupedStudents = students.stream()
-        .collect(Collectors.groupingBy(student ->
-            student.grade() + "-" + student.gender() + "-" + student.classCount()));
+    // 과목별 그룹화
+    Map<Integer, List<Student>> subjectGroups = new HashMap<>();
+    for (int subjectIndex = 0; subjectIndex < 12; subjectIndex++) { // 과목1~12
+      int index = subjectIndex; // Lambda에서 사용하는 인덱스
+      List<Student> studentsInSubject = group.stream()
+          .filter(student -> {
+            if (index < 7) {
+              return student.humanitiesSubjects.get(index) == 1;
+            } else {
+              return student.naturalSubjects.get(index - 7) == 1;
+            }
+          })
+          .toList();
+      subjectGroups.put(subjectIndex, studentsInSubject);
+    }
 
-    // 그룹별로 균등하게 배정
-    int classIndex = 1;
-    for (List<Student> group : groupedStudents.values()) {
-      Collections.shuffle(group); // 랜덤 섞기
-      for (Student student : group) {
-        classAssignments.get(classify + " " + classIndex).add(student);
-        classIndex = (classIndex % totalClasses) + 1; // 순환 배정
+    // 각 과목 그룹을 반에 순차적으로 배정
+    int currentClass = startClassId;
+    for (List<Student> subjectGroup : subjectGroups.values()) {
+      for (Student student : subjectGroup) {
+        // 중복 배정을 방지
+        if (!isStudentAlreadyAssigned(classAssignments, student)) {
+          classAssignments.get(currentClass).add(student);
+
+          // 다음 반으로 이동
+          currentClass++;
+          if (currentClass >= startClassId + numClasses) {
+            currentClass = startClassId;
+          }
+        }
       }
     }
 
     return classAssignments;
+  }
+
+  private boolean isStudentAlreadyAssigned(Map<Integer, List<Student>> classAssignments,
+      Student student) {
+    return classAssignments.values().stream().anyMatch(classList -> classList.contains(student));
   }
 
 }

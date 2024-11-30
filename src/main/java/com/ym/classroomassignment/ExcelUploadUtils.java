@@ -11,7 +11,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-public class ExcelUtils {
+public class ExcelUploadUtils {
 
   public static List<Student> mapExcelToStudents(MultipartFile file) throws IOException {
     List<Student> students = new ArrayList<>();
@@ -26,8 +26,8 @@ public class ExcelUtils {
         }
 
         // 셀 데이터 읽기
-        String code = getCellValueAsString(row.getCell(0));
-        if (!StringUtils.hasText(code)) {
+        String id = getCellValueAsString(row.getCell(0));
+        if (!StringUtils.hasText(id)) {
           continue;
         }
 
@@ -36,26 +36,26 @@ public class ExcelUtils {
         int number = (int) getCellValueAsDouble(row.getCell(3));
         String gender = getCellValueAsString(row.getCell(4));
 
-        int humanities1 = (int) getCellValueAsDouble(row.getCell(16));
-        int humanities2 = (int) getCellValueAsDouble(row.getCell(17));
-        int humanities3 = (int) getCellValueAsDouble(row.getCell(18));
-        int humanities4 = (int) getCellValueAsDouble(row.getCell(19));
-        int humanities5 = (int) getCellValueAsDouble(row.getCell(20));
-        int humanities6 = (int) getCellValueAsDouble(row.getCell(21));
-        int humanitiesCount =
-            humanities1 + humanities2 + humanities3 + humanities4 + humanities5 + humanities6;
+        int humanities1 = (int) getCellValueAsDouble(row.getCell(15));
+        int humanities2 = (int) getCellValueAsDouble(row.getCell(16));
+        int humanities3 = (int) getCellValueAsDouble(row.getCell(17));
+        int humanities4 = (int) getCellValueAsDouble(row.getCell(18));
+        int humanities5 = (int) getCellValueAsDouble(row.getCell(19));
+        int humanities6 = (int) getCellValueAsDouble(row.getCell(20));
+        int humanities7 = (int) getCellValueAsDouble(row.getCell(21));
+        List<Integer> humanitiesSubjects = List.of(humanities1, humanities2, humanities3,
+            humanities4, humanities5, humanities6, humanities7);
 
-        int naturalCount1 = (int) getCellValueAsDouble(row.getCell(22));
-        int naturalCount2 = (int) getCellValueAsDouble(row.getCell(23));
-        int naturalCount3 = (int) getCellValueAsDouble(row.getCell(24));
-        int naturalCount4 = (int) getCellValueAsDouble(row.getCell(25));
-        int naturalCount5 = (int) getCellValueAsDouble(row.getCell(26));
-        int naturalCount =
-            naturalCount1 + naturalCount2 + naturalCount3 + naturalCount4 + naturalCount5;
+        int natural1 = (int) getCellValueAsDouble(row.getCell(22));
+        int natural2 = (int) getCellValueAsDouble(row.getCell(23));
+        int natural3 = (int) getCellValueAsDouble(row.getCell(24));
+        int natural4 = (int) getCellValueAsDouble(row.getCell(25));
+        int natural5 = (int) getCellValueAsDouble(row.getCell(26));
+        List<Integer> naturalSubjects = List.of(natural1, natural2, natural3, natural4, natural5);
 
         // Student 객체 생성 및 추가
         students.add(
-            new Student(code, grade, clazz, number, gender, humanitiesCount, naturalCount));
+            new Student(id, grade, clazz, number, gender, humanitiesSubjects, naturalSubjects));
       }
     }
 
