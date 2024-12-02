@@ -4,6 +4,8 @@ server:
 spring:
   thymeleaf:
     cache: true
+    check-template-location: true
+    enabled: true
 
 logging:
   config: classpath:logback.xml
