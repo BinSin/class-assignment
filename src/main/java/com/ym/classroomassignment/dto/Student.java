@@ -19,8 +19,4 @@ public class Student {
   private List<Integer> humanitiesSubjects;
   private boolean wasArtsClass;      // 예체능 반 여부
 
-  public boolean isScience() {
-    return scienceSubjects.size() >= 2;
-  }
-
 }
