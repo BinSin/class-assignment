@@ -63,6 +63,11 @@
   <div class="form-container">
     <h2 class="form-header text-primary">학급 배정 룰렛</h2>
     <form id="uploadForm">
+      <!-- 예시 파일 다운로드 -->
+      <div class="mb-3 text-center">
+        <button type="button" class="btn btn-success" id="downloadExample">예시 파일 다운로드</button>
+      </div>
+
       <!-- 파일 업로드 -->
       <div class="mb-3">
         <label for="file" class="form-label">파일 업로드</label>
@@ -124,6 +129,25 @@
   let fullData = []; // 전체 Object List
   let headers = [];  // 헤더 리스트
   let selectedArtsClasses = []; // 예체능 반 선택 리스트
+
+  document.getElementById('downloadExample').addEventListener('click', () => {
+    // 예시 데이터 생성
+    const exampleData = [
+      ['학년', '반', '번호', '이름', '성별', '과목1', '과목2', '과목3', '과목4', '과목5'],
+      [1, 1, 1, '홍길동', '남', 1, 0, 1, 0, 0],
+      [1, 1, 2, '김영희', '여', 0, 1, 1, 0, 0],
+      [1, 2, 1, '이철수', '남', 1, 1, 0, 0, 1],
+      [1, 2, 2, '박민정', '여', 0, 1, 0, 1, 1]
+    ];
+
+    // 워크북 생성
+    const worksheet = XLSX.utils.aoa_to_sheet(exampleData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, '예시 파일');
+
+    // 파일 다운로드
+    XLSX.writeFile(workbook, '학급_배정_예시.xlsx');
+  });
 
   fileInput.addEventListener('change', () => {
     const file = fileInput.files[0];
