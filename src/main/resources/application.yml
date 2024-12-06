@@ -1,7 +1,8 @@
 server:
   shutdown: graceful
-
-spring:
+  http2:
+    enabled: true
+  
   servlet:
     multipart:
       enabled: true
@@ -10,3 +11,4 @@ spring:
   thymeleaf:
     prefix: classpath:/templates/
     suffix: .html
+

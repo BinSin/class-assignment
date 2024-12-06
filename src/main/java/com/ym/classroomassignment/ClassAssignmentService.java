@@ -139,7 +139,7 @@ public class ClassAssignmentService {
           ? student.getHumanitiesSubjects().size()
           : student.getScienceSubjects().size();
       String gender = student.getGender();
-
+  
       // 가장 적합한 반 선택
       int targetClassIndex = findOptimalClass(classCounts, subjectCounts, genderCounts,
           startClassNumber, numClasses, subjectCount, gender);
