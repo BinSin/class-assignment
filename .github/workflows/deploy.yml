@@ -1,4 +1,4 @@
-name: Deploy Spring Boot Application
+cdname: Deploy Spring Boot Application
 
 on:
   push:
@@ -33,7 +33,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
           source: build/libs/*.jar
-          target: /home/your-user/spring-boot-app/
+          target: /app/deploy
 
       # 5. 서버에서 애플리케이션 실행
       #- name: Restart application
