@@ -2,8 +2,7 @@ name: Deploy Spring Boot Application
 
 on:
   push:
-    branches:
-      - master
+    branches: [ "master" ]
 
 jobs:
   build-and-deploy:
