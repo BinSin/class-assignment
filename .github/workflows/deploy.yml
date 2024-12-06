@@ -36,4 +36,4 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: ./build/libs/*.jar
-          target: /home/ubuntu/app/deploy/
+          target: /app/deploy/
