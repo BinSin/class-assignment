@@ -24,6 +24,10 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew clean build
 
+# 3. Gradle 빌드
+      - name: test
+        run: ls
+      
       # 4. 서버로 전송
       - name: Deploy to server
         uses: appleboy/scp-action@v0.1.4
