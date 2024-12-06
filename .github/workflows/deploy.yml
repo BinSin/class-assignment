@@ -35,8 +35,8 @@ jobs:
       - name: Build with Gradle
         run: |
           ./gradlew clean build
-          mkdir -p output
-          cp build/libs/classroom-assignment-0.0.1-SNAPSHOT.jar output/app.jar
+          mkdir -p deploy
+          cp build/libs/classroom-assignment-0.0.1-SNAPSHOT.jar deploy/app.jar
 
 
       # 5. 빌드 결과 확인
@@ -50,5 +50,5 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ./output/app.jar
-          target: /app/deploy/
+          source: ./deploy/app.jar
+          target: /app/
