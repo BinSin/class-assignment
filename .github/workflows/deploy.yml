@@ -32,7 +32,7 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           #known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
-          source: build/libs/*.jar
+          source: ./build/libs/*.jar
           target: /app/deploy
 
       # 5. 서버에서 애플리케이션 실행
