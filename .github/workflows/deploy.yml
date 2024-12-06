@@ -51,4 +51,4 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: ./deploy/app.jar
-          target: /app/
+          target: /app/deploy/
