@@ -22,7 +22,11 @@ jobs:
 
       # 3. Gradle 빌드
       - name: Build with Gradle
-        run: ./gradlew clean build
+        run: |
+          ./gradlew clean build
+          mkdir -p output
+          cp build/libs/*.jar output/app.jar
+
 
       # 4. 빌드 결과 확인
       - name: List build directory
@@ -35,5 +39,5 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ./build/libs/*.jar
+          source: ./output/app.jar
           target: /app/deploy/
